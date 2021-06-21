@@ -15,13 +15,6 @@ module.exports = {
     seo: false, // Disables @apostrophecms/seo for redirects
     sitemap: false // Disables @apostrophecms/sitemap for redirects
   },
-  // init(self) {
-  //   // console.log(self.apos);
-  //   console.log(Object.keys(self.apos.modules));
-  //   if (!self.apos.modules[self.options.withType]) {
-  //     console.warn(`Redirects can not create relationships to ${self.options.withType}, defaulting to @apostrophecms/page`)
-  //   }
-  // },
   handlers(self) {
     return {
       beforeSave: {
