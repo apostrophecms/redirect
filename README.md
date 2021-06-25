@@ -1,8 +1,8 @@
-[![CircleCI](https://circleci.com/gh/apostrophecms/redirect/tree/main.svg?style=svg)](https://circleci.com/gh/apostrophecms/redirect/tree/main)
+[![CircleCI](https://circleci.com/gh/apostrophecms/redirect.svg?style=svg)](https://circleci.com/gh/apostrophecms/redirect/tree/main)
 [![Chat on Discord](https://img.shields.io/discord/517772094482677790.svg)](https://chat.apostrophecms.org)
 # Manage site redirects for Apostrophe 3
 
-## Note
+## Note about 1.0.0
 Apostrophe 2 supported creating relationships to multiple doc types from a single interface. This feature is still being ported to Apostrophe 3, as such redirects can only specify a single doc type to redirect to.
 ## Installation
 
