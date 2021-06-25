@@ -12,8 +12,7 @@ module.exports = {
     quickCreate: false,
     statusCode: 302,
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
-    seo: false, // Disables @apostrophecms/seo for redirects
-    sitemap: false // Disables @apostrophecms/sitemap for redirects
+    seo: false // Disables @apostrophecms/seo for redirects
   },
   handlers(self) {
     return {
@@ -30,7 +29,7 @@ module.exports = {
   },
   fields(self, options) {
     const remove = [
-      'visibility',
+      'visibility'
     ];
     const add = {
       redirectSlug: {
@@ -50,8 +49,14 @@ module.exports = {
         label: 'Link To',
         type: 'select',
         choices: [
-          { label: 'Internal Page', value: 'internal' },
-          { label: 'External URL', value: 'external' }
+          {
+            label: 'Internal Page',
+            value: 'internal'
+          },
+          {
+            label: 'External URL',
+            value: 'external'
+          }
         ],
         def: 'internal'
       },
@@ -65,7 +70,7 @@ module.exports = {
         label: 'Page Title',
         withType: '@apostrophecms/page',
         if: {
-          urlType: 'internal',
+          urlType: 'internal'
         },
         builders: {
           // Editors+ set up redirects, so it's OK for non-admins to follow them anywhere
@@ -82,7 +87,7 @@ module.exports = {
         label: 'URL',
         type: 'url',
         if: {
-          urlType: 'external',
+          urlType: 'external'
         }
       },
       statusCode: {
@@ -101,7 +106,7 @@ module.exports = {
         ],
         def: '302'
       }
-    }
+    };
 
     const group = {
       basics: {
@@ -116,7 +121,7 @@ module.exports = {
           'ignoreQueryString'
         ]
       }
-    }
+    };
 
     if (options.statusCode.toString() === '301') {
       add.statusCode.def = options.statusCode.toString();
@@ -133,16 +138,16 @@ module.exports = {
   middleware(self, options) {
     return {
       async checkRedirect(req, res, next) {
-        let slug = req.url;
-        let pathOnly = slug.split('?')[0];
-        let redirectRegEx = new RegExp(`^redirect-${self.apos.util.regExpQuote(pathOnly)}(\\?.*)?$`);
-        let results = await self.find(req, { slug: redirectRegEx }).toArray();
+        const slug = req.url;
+        const pathOnly = slug.split('?')[0];
+        const redirectRegEx = new RegExp(`^redirect-${self.apos.util.regExpQuote(pathOnly)}(\\?.*)?$`);
+        const results = await self.find(req, { slug: redirectRegEx }).toArray();
         let target;
         if (results) {
-          if (results.some(result => result.redirectSlug == slug)) {
-            target = results.find(result => result.redirectSlug == slug);
-          } else if (results.some(result => result.redirectSlug == pathOnly && result.ignoreQueryString)) {
-            target = results.find(result => result.redirectSlug == pathOnly && result.ignoreQueryString);
+          if (results.some(result => result.redirectSlug === slug)) {
+            target = results.find(result => result.redirectSlug === slug);
+          } else if (results.some(result => result.redirectSlug === pathOnly && result.ignoreQueryString)) {
+            target = results.find(result => result.redirectSlug === pathOnly && result.ignoreQueryString);
           }
 
           if (target) {
