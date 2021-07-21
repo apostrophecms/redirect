@@ -2,8 +2,6 @@
 [![Chat on Discord](https://img.shields.io/discord/517772094482677790.svg)](https://chat.apostrophecms.org)
 # Manage site redirects for Apostrophe 3
 
-## Note about 1.0.0
-Apostrophe 2 supported creating relationships to multiple doc types from a single interface. This feature is still being ported to Apostrophe 3, as such redirects can only specify a single doc type to redirect to.
 ## Installation
 
 First make sure you have an [Apostrophe project](https://apostrophecms.com)!
@@ -34,7 +32,9 @@ Accepted values are `301` and `302`
 ```javascript
 // Other modules, then...
 '@apostrophecms/redirect': {
-  statusCode: 301
+  options: {
+    statusCode: 301
+  }
 }
 ```
 > Note that permanent redirects are cached by Google for a long time. It is a good idea to encourage users to test with a temporary redirect first, then switch to permanent which is an SEO best practice — as long as it's correct.
@@ -46,9 +46,13 @@ By passing `withType` to your configuration you can specify the document type yo
 ```javascript
 // Other modules, then...
 '@apostrophecms/redirect': {
-  withType: 'article'
+  options: {
+    withType: 'article'
+  }
 }
 ```
+
+**Note:** Apostrophe 2 supported creating relationships to multiple doc types from a single interface. This feature is still being ported to Apostrophe 3, as such redirects can only specify a single doc type to redirect to.
 
 ## Usage
 
