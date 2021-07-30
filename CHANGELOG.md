@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1
 
 - Fixes README code examples for the `withType` and `statusCode` options.
 

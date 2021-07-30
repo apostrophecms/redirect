@@ -1,6 +1,6 @@
 {
   "name": "@apostrophecms/redirect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Manage redirects for Apostrophe 3",
   "main": "index.js",
   "scripts": {
@@ -10,9 +10,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apostrophecms/@apostrophecms/redirect.git"
+    "url": "git+https://github.com/apostrophecms/redirect.git"
   },
-  "homepage": "https://github.com/apostrophecms/@apostrophecms/redirect#readme",
+  "homepage": "https://github.com/apostrophecms/redirect#readme",
   "author": "Apostrophe Technologies",
   "license": "MIT",
   "devDependencies": {
