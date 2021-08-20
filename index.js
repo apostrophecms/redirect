@@ -187,7 +187,7 @@ module.exports = {
             delete redirect.lastPublishedAt;
             redirect._id = redirect._id.split(':')[0];
             if (redirect.aposDocId) {
-                await self.apos.doc.db.removeMany({
+              await self.apos.doc.db.removeMany({
                 aposDocId: redirect.aposDocId
               });
               await self.apos.doc.db.insertOne(redirect);
@@ -195,6 +195,6 @@ module.exports = {
           }
         });
       }
-    }
+    };
   }
 };
