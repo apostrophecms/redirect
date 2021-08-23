@@ -8,11 +8,14 @@ module.exports = {
     editRole: 'editor',
     publishRole: 'editor',
     withType: '@apostrophecms/page',
-    autopublish: true,
+    localized: false,
     quickCreate: false,
     statusCode: 302,
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
     seo: false // Disables @apostrophecms/seo for redirects
+  },
+  init(self) {
+    self.addUnlocalizedMigration();
   },
   handlers(self) {
     return {
@@ -167,6 +170,30 @@ module.exports = {
           }
         }
         return next();
+      }
+    };
+  },
+  methods(self) {
+    return {
+      addUnlocalizedMigration() {
+        self.apos.migration.add('@apostrophecms/redirect:unlocalized', async () => {
+          const redirects = await self.apos.doc.db.find({
+            type: self.name,
+            aposMode: 'published'
+          }).toArray();
+          for (const redirect of redirects) {
+            delete redirect.aposLocale;
+            delete redirect.aposMode;
+            delete redirect.lastPublishedAt;
+            redirect._id = redirect._id.split(':')[0];
+            if (redirect.aposDocId) {
+              await self.apos.doc.db.removeMany({
+                aposDocId: redirect.aposDocId
+              });
+              await self.apos.doc.db.insertOne(redirect);
+            }
+          }
+        });
       }
     };
   }

@@ -62,4 +62,4 @@ By default a redirect includes any query string (the `?` and whatever follows it
 
 Be aware that each redirect is live as soon as you save it and that it is possible to make a mess with redirects. In a pinch, you can remove unwanted redirects via the MongoDB command line client (look for `{ type: "@apostrophecms/redirect" }` in the `aposDocs` collection in MongoDB).
 
-Also be aware that Apostrophe already creates "soft redirects" every time you change the slug of a page. So you shouldn't need manually created "hard redirects" in that situation.
+Also be aware that Apostrophe already creates "soft redirects" every time you change the slug of a page, provided the page has been accessed at least once at the old URL. So you shouldn't need manually created "hard redirects" in that situation.
