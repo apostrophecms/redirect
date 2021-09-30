@@ -2,8 +2,8 @@ module.exports = {
   extend: '@apostrophecms/piece-type',
   options: {
     alias: 'redirect',
-    label: 'Redirect',
-    pluralLabel: 'Redirects',
+    label: 'aposRedirect:label',
+    pluralLabel: 'aposRedirect:pluralLabel',
     searchable: false,
     editRole: 'editor',
     publishRole: 'editor',
@@ -11,6 +11,10 @@ module.exports = {
     localized: false,
     quickCreate: false,
     statusCode: 302,
+    i18n: {
+      ns: 'aposRedirect',
+      browser: true
+    },
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
     seo: false // Disables @apostrophecms/seo for redirects
   },
@@ -37,47 +41,47 @@ module.exports = {
     const add = {
       redirectSlug: {
         // This is *not* type: 'slug' because we want to let you match any
-        // goldang nonsense the old site had in there, including mixed case
+        // nonsense the old site had in there, including mixed case.
         type: 'string',
-        label: 'Old URL',
-        help: 'Format with leading / such as /old-url',
+        label: 'aposRedirect:originalSlug',
+        help: 'aposRedirect:originalSlugHelp',
         required: true
       },
       title: {
-        label: 'Description',
+        label: 'aposRedirect:title',
         type: 'string',
         required: true
       },
       urlType: {
-        label: 'Link To',
+        label: 'aposRedirect:urlType',
         type: 'select',
         choices: [
           {
-            label: 'Internal Page',
+            label: 'aposRedirect:urlTypeInternal',
             value: 'internal'
           },
           {
-            label: 'External URL',
+            label: 'aposRedirect:urlTypeExternal',
             value: 'external'
           }
         ],
         def: 'internal'
       },
       ignoreQueryString: {
-        label: 'Ignore query string when matching.',
+        label: 'aposRedirect:ignoreQuery',
         type: 'boolean',
         def: false
       },
       _newPage: {
         type: 'relationship',
-        label: 'Page Title',
+        label: 'aposRedirect:newPage',
         withType: '@apostrophecms/page',
         if: {
           urlType: 'internal'
         },
         builders: {
-          // Editors+ set up redirects, so it's OK for non-admins to follow them anywhere
-          // (they won't actually get access without logging in)
+          // Editors+ set up redirects, so it's OK for non-admins to follow
+          // them anywhere (they won't actually get access without logging in)
           project: {
             slug: 1,
             title: 1,
@@ -87,23 +91,23 @@ module.exports = {
         max: 1
       },
       externalUrl: {
-        label: 'URL',
+        label: 'aposRedirect:external',
         type: 'url',
         if: {
           urlType: 'external'
         }
       },
       statusCode: {
-        label: 'Redirect Type',
+        label: 'aposRedirect:statusCode',
         type: 'radio',
-        htmlHelp: 'Use <strong>"Temporary"</strong> for temporary redirects or for testing purposes.<br />Use <strong>"Permanent"</strong> after testing, this is an SEO best practice.',
+        htmlHelp: 'aposRedirect:statusCodeHtmlHelp',
         choices: [
           {
-            label: 'Temporary (Status code 302)',
+            label: 'aposRedirect:302',
             value: '302'
           },
           {
-            label: 'Permanent (Status code 301, Search engines will cache these, proofread carefully)',
+            label: 'aposRedirect:301',
             value: '301'
           }
         ],
@@ -113,7 +117,7 @@ module.exports = {
 
     const group = {
       basics: {
-        label: 'Basics',
+        label: 'apostrophe:basics',
         fields: [
           'title',
           'redirectSlug',
