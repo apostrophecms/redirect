@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Adds English (`en`) locale strings for static text.
+- Adds Spanish (`es`) localization for static text.
 - Adds Slovak (`sk`) locale strings for static text.
 
 ## 1.0.1 (2021-08-26)
