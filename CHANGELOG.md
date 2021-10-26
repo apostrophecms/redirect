@@ -3,8 +3,9 @@
 ## 1.1.0 (2021-10)
 
 - Adds English (`en`) locale strings for static text.
-- Adds Spanish (`es`) localization for static text.
-- Adds Slovak (`sk`) locale strings for static text.
+- Adds Spanish (`es`) localization to static text. Thanks to [Eugenio Gonzalez](https://github.com/egonzalezg9) for the contribution.
+- Adds Slovak (`sk`) locale strings for static text. Thanks to [Michael Huna](https://github.com/Miselrkba) for the contribution.
+
 
 ## 1.0.1 (2021-08-26)
 
