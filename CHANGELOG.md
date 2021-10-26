@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.1.0 (2021-10)
 
 - Adds English (`en`) locale strings for static text.
 - Adds Spanish (`es`) localization for static text.
