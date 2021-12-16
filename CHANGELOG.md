@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+- Adds `noMatch` event for implementing fallbacks, and also documents how to preempt this module if desired.
+
 ## 1.1.0 (2021-10-28)
 
 - Adds English (`en`) locale strings for static text.
