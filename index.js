@@ -169,11 +169,22 @@ module.exports = {
             } else if (target.urlType === 'external' && target.externalUrl.length) {
               return req.res.redirect(status, target.externalUrl);
             } else {
-              return next();
+              return emitAndRedirectOrNext();
             }
           }
         }
-        return next();
+        return emitAndRedirectOrNext();
+        async function emitAndRedirectOrNext() {
+          const result = {};
+          await self.emit('noMatch', req, result);
+          if (result.redirect) {
+            return res.redirect(result.redirect);
+          }
+          if (result.rawRedirect) {
+            return res.rawRedirect(result.redirect);
+          }
+          return next();
+        }
       }
     };
   },

@@ -63,3 +63,55 @@ By default a redirect includes any query string (the `?` and whatever follows it
 Be aware that each redirect is live as soon as you save it and that it is possible to make a mess with redirects. In a pinch, you can remove unwanted redirects via the MongoDB command line client (look for `{ type: "@apostrophecms/redirect" }` in the `aposDocs` collection in MongoDB).
 
 Also be aware that Apostrophe already creates "soft redirects" every time you change the slug of a page, provided the page has been accessed at least once at the old URL. So you shouldn't need manually created "hard redirects" in that situation.
+
+## Extending the module
+
+### Providing a fallback handler
+
+If you wish to handle redirects in another way when this module does not find a match, you can do so by listening for the `@apostrophecms/redirect:noMatch` event. This event handler receives `req, result`. To issue a redirect, set `result.redirect` in your event handler. To issue a "raw" redirect to which any sitewide prefix is not appended automatically, set `result.rawRedirect` in your event handler. **Do not** call `req.res.redirect()` yourself in your event handler.
+
+For example:
+
+```javascript
+// modules/redirect-fallback/index.js
+module.exports = {
+  handlers(self) {
+    return {
+      '@apostrophecms/redirect:noMatch': {
+        // will be awaited, you can do queries here if needed
+        async fallback(req, result) {
+          if (req.url.match(/pattern/)) {
+            result.redirect = '/destination';
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Preempting the redirect module
+
+If your goal is to preempt this module by making a decision to redirect differently in some cases before this module looks for a match, register your own middleware and perform the redirect there. Use `before` to specify that your own module's middleware comes first.
+
+For example:
+
+```javascript
+// modules/early-redirect/index.js
+module.exports = {
+  middleware(self) {
+    return {
+      earlyRedirect: {
+        before: '@apostrophecms/redirect',
+        middleware(req, res, next) {
+          if (req.url.match(/pattern/)) {
+            return res.redirect('/destination');
+          } else {
+            return next();
+          }
+        }
+      }
+    };
+  }
+};
+```
