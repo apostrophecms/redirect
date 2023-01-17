@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+- Any exceptions thrown in the middleware are caught properly, avoiding a process restart.
+
 ## 1.2.0 (2021-12-22)
 
 - Adds `noMatch` event for implementing fallbacks, and also documents how to preempt this module if desired.
