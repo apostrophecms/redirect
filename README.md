@@ -1,4 +1,3 @@
-[![CircleCI](https://circleci.com/gh/apostrophecms/redirect.svg?style=svg)](https://circleci.com/gh/apostrophecms/redirect/tree/main)
 [![Chat on Discord](https://img.shields.io/discord/517772094482677790.svg)](https://chat.apostrophecms.org)
 # Manage site redirects for Apostrophe 3
 
