@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.2.1 (2023-02-01)
 
 - Any exceptions thrown in the middleware are caught properly, avoiding a process restart.
 
