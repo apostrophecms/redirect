@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+- Removes `apostrophe` as a peer dependency.
+
 ## 1.2.1 (2023-02-01)
 
 - Any exceptions thrown in the middleware are caught properly, avoiding a process restart.
