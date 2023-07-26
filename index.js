@@ -150,6 +150,7 @@ module.exports = {
           const pathOnly = slug.split('?')[0];
           const redirectRegEx = new RegExp(`^redirect-${self.apos.util.regExpQuote(pathOnly)}(\\?.*)?$`);
           const results = await self.find(req, { slug: redirectRegEx }).toArray();
+
           if (!results || !results.length) {
             return await emitAndRedirectOrNext();
           }
@@ -165,7 +166,7 @@ module.exports = {
           const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
 
           if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-            return req.res.redirect(status, target.redirectSlug);
+            return req.res.redirect(status, target._newPage[0].slug);
           } else if (target.urlType === 'external' && target.externalUrl.length) {
             return req.res.redirect(status, target.externalUrl);
           }
