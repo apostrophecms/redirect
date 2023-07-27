@@ -147,9 +147,8 @@ module.exports = {
       async checkRedirect(req, res, next) {
         try {
           const slug = req.originalUrl;
-          const pathOnly = slug.split('?')[0];
-          const redirectRegEx = new RegExp(`^redirect-${self.apos.util.regExpQuote(pathOnly)}(\\?.*)?$`);
-          const results = await self.find(req, { slug: redirectRegEx }).toArray();
+          const [ pathOnly ] = slug.split('?');
+          const results = await self.find(req, { redirectSlug: pathOnly }).toArray();
 
           if (!results || !results.length) {
             return await emitAndRedirectOrNext();
