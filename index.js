@@ -148,9 +148,9 @@ module.exports = {
         try {
           const slug = req.originalUrl;
           const [ pathOnly ] = slug.split('?');
-          const results = await self.find(req, { redirectSlug: pathOnly }).toArray();
+          const results = await self.find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] }).toArray();
 
-          if (!results || !results.length) {
+          if (!results.length) {
             return await emitAndRedirectOrNext();
           }
 
