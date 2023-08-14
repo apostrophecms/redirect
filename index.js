@@ -20,6 +20,7 @@ module.exports = {
   },
   init(self) {
     self.addUnlocalizedMigration();
+    self.createIndexes();
   },
   handlers(self) {
     return {
@@ -148,14 +149,19 @@ module.exports = {
         try {
           const slug = req.originalUrl;
           const [ pathOnly ] = slug.split('?');
-          const results = await self.find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] }).toArray();
+          const results = await self
+            .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+            .toArray();
 
           if (!results.length) {
             return await emitAndRedirectOrNext();
           }
 
           const target = results.find(({ redirectSlug }) => redirectSlug === slug) ||
-           results.find(({ redirectSlug, ignoreQueryString }) => redirectSlug === pathOnly && ignoreQueryString);
+           results.find(({
+             redirectSlug,
+             ignoreQueryString
+           }) => redirectSlug === pathOnly && ignoreQueryString);
 
           if (!target) {
             return await emitAndRedirectOrNext();
@@ -165,9 +171,9 @@ module.exports = {
           const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
 
           if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-            return req.res.redirect(status, target._newPage[0].slug);
+            return req.res.rawRedirect(status, target._newPage[0].slug);
           } else if (target.urlType === 'external' && target.externalUrl.length) {
-            return req.res.redirect(status, target.externalUrl);
+            return req.res.rawRedirect(status, target.externalUrl);
           }
 
           return await emitAndRedirectOrNext();
@@ -210,6 +216,9 @@ module.exports = {
             }
           }
         });
+      },
+      createIndexes() {
+        self.apos.doc.db.createIndex({ redirectSlug: 1 });
       }
     };
   }
