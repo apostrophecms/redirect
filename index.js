@@ -20,6 +20,7 @@ module.exports = {
   },
   init(self) {
     self.addUnlocalizedMigration();
+    self.createIndexes();
   },
   handlers(self) {
     return {
@@ -146,34 +147,34 @@ module.exports = {
     return {
       async checkRedirect(req, res, next) {
         try {
-          const slug = req.url;
-          const pathOnly = slug.split('?')[0];
-          const redirectRegEx = new RegExp(`^redirect-${self.apos.util.regExpQuote(pathOnly)}(\\?.*)?$`);
-          const results = await self.find(req, { slug: redirectRegEx }).toArray();
-          let target;
-          if (results) {
-            if (results.some(result => result.redirectSlug === slug)) {
-              target = results.find(result => result.redirectSlug === slug);
-            } else if (results.some(result => result.redirectSlug === pathOnly && result.ignoreQueryString)) {
-              target = results.find(result => result.redirectSlug === pathOnly && result.ignoreQueryString);
-            }
+          const slug = req.originalUrl;
+          const [ pathOnly ] = slug.split('?');
+          const results = await self
+            .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+            .toArray();
 
-            if (target) {
-              let status = parseInt(target.statusCode);
-
-              if (isNaN(status) || !status) {
-                status = 302;
-              }
-
-              if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-                return req.res.redirect(status, target._newPage[0]._url);
-              } else if (target.urlType === 'external' && target.externalUrl.length) {
-                return req.res.redirect(status, target.externalUrl);
-              } else {
-                return await emitAndRedirectOrNext();
-              }
-            }
+          if (!results.length) {
+            return await emitAndRedirectOrNext();
           }
+
+          const target = results.find(({ redirectSlug }) => redirectSlug === slug) ||
+           results.find(({
+             redirectSlug,
+             ignoreQueryString
+           }) => redirectSlug === pathOnly && ignoreQueryString);
+
+          if (!target) {
+            return await emitAndRedirectOrNext();
+          }
+
+          const parsedCode = parseInt(target.statusCode);
+          const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
+          if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
+            return req.res.rawRedirect(status, target._newPage[0]._url);
+          } else if (target.urlType === 'external' && target.externalUrl.length) {
+            return req.res.rawRedirect(status, target.externalUrl);
+          }
+
           return await emitAndRedirectOrNext();
         } catch (e) {
           self.apos.util.error(e);
@@ -214,6 +215,9 @@ module.exports = {
             }
           }
         });
+      },
+      createIndexes() {
+        self.apos.doc.db.createIndex({ redirectSlug: 1 });
       }
     };
   }

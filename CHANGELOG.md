@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixes redirections when using locale prefixes. The locale prefix must be added to the `redirectSlug` to avoid conflicts with other locales.
+
 ## 1.2.2 (2023-03-06)
 
 - Removes `apostrophe` as a peer dependency.
