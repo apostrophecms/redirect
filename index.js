@@ -169,9 +169,8 @@ module.exports = {
 
           const parsedCode = parseInt(target.statusCode);
           const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
-
           if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-            return req.res.rawRedirect(status, target._newPage[0].slug);
+            return req.res.rawRedirect(status, target._newPage[0]._url);
           } else if (target.urlType === 'external' && target.externalUrl.length) {
             return req.res.rawRedirect(status, target.externalUrl);
           }
