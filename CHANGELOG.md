@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.2.3
 
-- Fixes redirections when using locale prefixes. The locale prefix must be added to the `redirectSlug` to avoid conflicts with other locales.
+- Fixes redirections when using locale prefixes.
 
 ## 1.2.2 (2023-03-06)
 
