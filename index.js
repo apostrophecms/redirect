@@ -31,6 +31,13 @@ module.exports = {
           if (!doc.title) {
             doc.title = doc.redirectSlug;
           }
+        },
+        setCurrentLocale(req, doc) {
+          const internalPage = doc._newPage && doc._newPage[0];
+
+          if (internalPage && doc.urlType === 'internal') {
+            doc.targetLocale = internalPage.aposLocale.replace(/:.*$/, '');
+          }
         }
       }
     };
@@ -135,7 +142,7 @@ module.exports = {
       add.statusCode.def = options.statusCode.toString();
     }
 
-    add._newPage.withType = self.options.withType;
+    add._newPage.withType = options.withType;
 
     return {
       add,
