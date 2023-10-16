@@ -156,19 +156,37 @@ module.exports = {
         try {
           const slug = req.originalUrl;
           const [ pathOnly ] = slug.split('?');
+
           const results = await self
             .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+            .relationships(false)
+            .project({
+              _id: 1,
+              redirectSlug: 1,
+              targetLocale: 1,
+              externalUrl: 1,
+              urlType: 1
+            })
             .toArray();
 
           if (!results.length) {
             return await emitAndRedirectOrNext();
           }
 
-          const target = results.find(({ redirectSlug }) => redirectSlug === slug) ||
+          const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
            results.find(({
              redirectSlug,
              ignoreQueryString
            }) => redirectSlug === pathOnly && ignoreQueryString);
+
+          const localizedReq = foundTarget.urlType === 'internal' &&
+            req.locale !== foundTarget.targetLocale
+            ? req.clone({ locale: foundTarget.targetLocale })
+            : req;
+
+          const target = foundTarget.urlType === 'internal'
+            ? await self.find(localizedReq, { _id: foundTarget._id }).toObject()
+            : foundTarget;
 
           if (!target) {
             return await emitAndRedirectOrNext();
