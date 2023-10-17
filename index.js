@@ -35,9 +35,9 @@ module.exports = {
         setCurrentLocale(req, doc) {
           const internalPage = doc._newPage && doc._newPage[0];
 
-          if (internalPage && doc.urlType === 'internal') {
-            doc.targetLocale = internalPage.aposLocale.replace(/:.*$/, '');
-          }
+          doc.targetLocale = internalPage && doc.urlType === 'internal'
+            ? internalPage.aposLocale.replace(/:.*$/, '')
+            : null;
         }
       }
     };
@@ -219,6 +219,24 @@ module.exports = {
       }
     };
   },
+  queries(self, query) {
+    return {
+      builders: {
+        withLocaleTarget: {
+          launder(locale) {
+            console.log('locale', locale);
+            return self.apos.launder.string(locale);
+          },
+          def: null,
+          finalize() {
+            const locale = query.get('withLocaleTarget');
+            return query.and({ $or: [ { targetLocale: null }, { targetLocale: locale } ] });
+          }
+
+        }
+      }
+    };
+  },
   methods(self) {
     return {
       addUnlocalizedMigration() {
@@ -243,6 +261,14 @@ module.exports = {
       },
       createIndexes() {
         self.apos.doc.db.createIndex({ redirectSlug: 1 });
+      }
+    };
+  },
+
+  extendMethods(self) {
+    return {
+      find(_super, req, criteria, options) {
+        return _super(req, criteria, options).withLocaleTarget(req.locale);
       }
     };
   }
