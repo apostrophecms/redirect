@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Adds possibility to redirect from a locale to another one using internal redirects.
+
 ## 1.2.3
 
 - Fixes redirections when using locale prefixes.
