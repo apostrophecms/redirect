@@ -222,17 +222,19 @@ module.exports = {
   queries(self, query) {
     return {
       builders: {
-        withLocaleTarget: {
-          launder(locale) {
-            console.log('locale', locale);
-            return self.apos.launder.string(locale);
+        def: true,
+        currentLocaleTarget: {
+          launder(val) {
+            return self.apos.launder.booleanOrNull(val);
           },
-          def: null,
           finalize() {
-            const locale = query.get('withLocaleTarget');
-            return query.and({ $or: [ { targetLocale: null }, { targetLocale: locale } ] });
-          }
+            const active = query.get('currentLocaleTarget');
+            const locale = query.req.locale;
 
+            if (active && locale) {
+              query.and({ $or: [ { targetLocale: null }, { targetLocale: locale } ] });
+            }
+          }
         }
       }
     };
@@ -261,14 +263,6 @@ module.exports = {
       },
       createIndexes() {
         self.apos.doc.db.createIndex({ redirectSlug: 1 });
-      }
-    };
-  },
-
-  extendMethods(self) {
-    return {
-      find(_super, req, criteria, options) {
-        return _super(req, criteria, options).withLocaleTarget(req.locale);
       }
     };
   }
