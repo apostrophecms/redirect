@@ -159,6 +159,7 @@ module.exports = {
 
           const results = await self
             .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+            .currentLocaleTarget(false)
             .relationships(false)
             .project({
               _id: 1,
