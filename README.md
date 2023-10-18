@@ -114,3 +114,20 @@ module.exports = {
   }
 };
 ```
+
+
+## Redirecting to other locales
+
+It's possible to redirect from a locale to another one, with external redirections, 
+since you define manually the url to redirect to.
+
+But also with internal redirects (relationship to page), even if relationships don't support relationships to other locales.
+
+A query builder exist called `currentLocaleTarget` that hide redirects that have relationships to other locales (different from the current one).
+If you want to get all redirects whatever the locale of their internal redirects you can undo this behavior using the query builder:
+```javascript
+const redirects = await self.apos.modules['@apostrophecms/redirect']
+    .find(req)
+    .currentLocaleTarget(false)
+    .toArray();
+```
