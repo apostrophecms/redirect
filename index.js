@@ -31,6 +31,13 @@ module.exports = {
           if (!doc.title) {
             doc.title = doc.redirectSlug;
           }
+        },
+        setCurrentLocale(req, doc) {
+          const internalPage = doc._newPage && doc._newPage[0];
+
+          doc.targetLocale = internalPage && doc.urlType === 'internal'
+            ? internalPage.aposLocale.replace(/:.*$/, '')
+            : null;
         }
       }
     };
@@ -135,7 +142,7 @@ module.exports = {
       add.statusCode.def = options.statusCode.toString();
     }
 
-    add._newPage.withType = self.options.withType;
+    add._newPage.withType = options.withType;
 
     return {
       add,
@@ -149,19 +156,38 @@ module.exports = {
         try {
           const slug = req.originalUrl;
           const [ pathOnly ] = slug.split('?');
+
           const results = await self
             .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+            .currentLocaleTarget(false)
+            .relationships(false)
+            .project({
+              _id: 1,
+              redirectSlug: 1,
+              targetLocale: 1,
+              externalUrl: 1,
+              urlType: 1
+            })
             .toArray();
 
           if (!results.length) {
             return await emitAndRedirectOrNext();
           }
 
-          const target = results.find(({ redirectSlug }) => redirectSlug === slug) ||
+          const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
            results.find(({
              redirectSlug,
              ignoreQueryString
            }) => redirectSlug === pathOnly && ignoreQueryString);
+
+          const localizedReq = foundTarget.urlType === 'internal' &&
+            req.locale !== foundTarget.targetLocale
+            ? req.clone({ locale: foundTarget.targetLocale })
+            : req;
+
+          const target = foundTarget.urlType === 'internal'
+            ? await self.find(localizedReq, { _id: foundTarget._id }).toObject()
+            : foundTarget;
 
           if (!target) {
             return await emitAndRedirectOrNext();
@@ -190,6 +216,26 @@ module.exports = {
             return res.rawRedirect(result.redirect);
           }
           return next();
+        }
+      }
+    };
+  },
+  queries(self, query) {
+    return {
+      builders: {
+        currentLocaleTarget: {
+          def: true,
+          launder(val) {
+            return self.apos.launder.booleanOrNull(val);
+          },
+          finalize() {
+            const active = query.get('currentLocaleTarget');
+            const { locale } = query.req;
+
+            if (active && locale) {
+              query.and({ $or: [ { targetLocale: null }, { targetLocale: locale } ] });
+            }
+          }
         }
       }
     };
