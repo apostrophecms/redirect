@@ -222,14 +222,14 @@ module.exports = {
   queries(self, query) {
     return {
       builders: {
-        def: true,
         currentLocaleTarget: {
+          def: true,
           launder(val) {
             return self.apos.launder.booleanOrNull(val);
           },
           finalize() {
             const active = query.get('currentLocaleTarget');
-            const locale = query.req.locale;
+            const { locale } = query.req;
 
             if (active && locale) {
               query.and({ $or: [ { targetLocale: null }, { targetLocale: locale } ] });
