@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 (2023-11-03)
 
 - Adds possibility to redirect from a locale to another one using internal redirects.
 
