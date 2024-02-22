@@ -16,7 +16,8 @@ module.exports = {
       browser: true
     },
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
-    seo: false // Disables @apostrophecms/seo for redirects
+    seoFields: false, // Disables @apostrophecms/seo for redirects
+    regExpWhiteList: [ /\/api\/v1\/.*/ ]
   },
   init(self) {
     self.addUnlocalizedMigration();
@@ -80,6 +81,11 @@ module.exports = {
         type: 'boolean',
         def: false
       },
+      forwardQueryString: {
+        label: 'aposRedirect:forwardQuery',
+        type: 'boolean',
+        def: false
+      },
       _newPage: {
         type: 'relationship',
         label: 'aposRedirect:newPage',
@@ -93,7 +99,8 @@ module.exports = {
           project: {
             slug: 1,
             title: 1,
-            _url: 1
+            _url: 1,
+            aposLocale: 1
           }
         },
         max: 1
@@ -133,7 +140,8 @@ module.exports = {
           '_newPage',
           'externalUrl',
           'statusCode',
-          'ignoreQueryString'
+          'ignoreQueryString',
+          'forwardQueryString'
         ]
       }
     };
@@ -152,70 +160,95 @@ module.exports = {
   },
   middleware(self, options) {
     return {
-      async checkRedirect(req, res, next) {
-        try {
+      checkRedirect: {
+        before: '@apostrophecms/global',
+        async middleware(req, res, next) {
+
+          try {
+            if (self.options.regExpWhiteList.find((regExp) => regExp.test(req.originalUrl))) {
+              return next();
+            }
+          } catch (e) {
+            self.apos.util.error('Error checking redirect white list: ', e);
+          }
+
           const slug = req.originalUrl;
-          const [ pathOnly ] = slug.split('?');
+          const [ pathOnly, queryString ] = slug.split('?');
+          let shouldForwardQueryString = false;
+          try {
 
-          const results = await self
-            .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
-            .currentLocaleTarget(false)
-            .relationships(false)
-            .project({
-              _id: 1,
-              redirectSlug: 1,
-              targetLocale: 1,
-              externalUrl: 1,
-              urlType: 1
-            })
-            .toArray();
+            const results = await self
+              .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+              .currentLocaleTarget(false)
+              .relationships(false)
+              .project({
+                _id: 1,
+                redirectSlug: 1,
+                targetLocale: 1,
+                externalUrl: 1,
+                urlType: 1,
+                ignoreQueryString: 1,
+                forwardQueryString: 1
+              })
+              .toArray();
 
-          if (!results.length) {
+            if (!results.length) {
+              return await emitAndRedirectOrNext();
+            }
+
+            const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
+            results.find(({
+              redirectSlug,
+              ignoreQueryString
+            }) => redirectSlug === pathOnly && ignoreQueryString);
+
+            shouldForwardQueryString =  foundTarget && foundTarget.forwardQueryString;
+
+            const localizedReq = foundTarget.urlType === 'internal' &&
+              req.locale !== foundTarget.targetLocale
+              ? req.clone({ locale: foundTarget.targetLocale })
+              : req;
+
+            const target = foundTarget.urlType === 'internal'
+              ? await self.find(localizedReq, { _id: foundTarget._id }).toObject()
+              : foundTarget;
+
+            if (!target) {
+              return await emitAndRedirectOrNext();
+            }
+
+            const parsedCode = parseInt(target.statusCode);
+            const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
+            if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
+              return redirect(status, target._newPage[0]._url);
+            } else if (target.urlType === 'external' && target.externalUrl.length) {
+              return redirect(status, target.externalUrl);
+            }
+
             return await emitAndRedirectOrNext();
+          } catch (e) {
+            self.apos.util.error(e);
+            return res.status(500).send('error');
           }
 
-          const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
-           results.find(({
-             redirectSlug,
-             ignoreQueryString
-           }) => redirectSlug === pathOnly && ignoreQueryString);
-
-          const localizedReq = foundTarget.urlType === 'internal' &&
-            req.locale !== foundTarget.targetLocale
-            ? req.clone({ locale: foundTarget.targetLocale })
-            : req;
-
-          const target = foundTarget.urlType === 'internal'
-            ? await self.find(localizedReq, { _id: foundTarget._id }).toObject()
-            : foundTarget;
-
-          if (!target) {
-            return await emitAndRedirectOrNext();
+          async function redirect(status, url, redirectMethod = 'rawRedirect') {
+            const result = { status, url };
+            await self.emit('beforeRedirect', req, result);
+            const targetUrl = result.url.indexOf('?') > -1 ? result.url : result.url + (shouldForwardQueryString && queryString ? `?${queryString}` : '');
+            return res[redirectMethod](result.status, targetUrl);
           }
 
-          const parsedCode = parseInt(target.statusCode);
-          const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
-          if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-            return req.res.rawRedirect(status, target._newPage[0]._url);
-          } else if (target.urlType === 'external' && target.externalUrl.length) {
-            return req.res.rawRedirect(status, target.externalUrl);
+          async function emitAndRedirectOrNext() {
+            const result = { status: 302 };
+            await self.emit('noMatch', req, result);
+            if (result.redirect) {
+              return redirect(result.status, result.redirect, 'redirect');
+            }
+            if (result.rawRedirect) {
+              return redirect(result.status, result.rawRedirect);
+            }
+            return next();
           }
-
-          return await emitAndRedirectOrNext();
-        } catch (e) {
-          self.apos.util.error(e);
-          return res.status(500).send('error');
-        }
-        async function emitAndRedirectOrNext() {
-          const result = {};
-          await self.emit('noMatch', req, result);
-          if (result.redirect) {
-            return res.redirect(result.redirect);
-          }
-          if (result.rawRedirect) {
-            return res.rawRedirect(result.redirect);
-          }
-          return next();
         }
       }
     };
