@@ -172,11 +172,10 @@ module.exports = {
             self.apos.util.error('Error checking redirect white list: ', e);
           }
 
-          const slug = req.originalUrl;
-          const [ pathOnly, queryString ] = slug.split('?');
-          let shouldForwardQueryString = false;
           try {
-
+            const slug = req.originalUrl;
+            const [ pathOnly, queryString ] = slug.split('?');
+            
             const results = await self
               .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
               .currentLocaleTarget(false)
@@ -202,7 +201,7 @@ module.exports = {
               ignoreQueryString
             }) => redirectSlug === pathOnly && ignoreQueryString);
 
-            shouldForwardQueryString =  foundTarget && foundTarget.forwardQueryString;
+            const shouldForwardQueryString = foundTarget && foundTarget.forwardQueryString;
 
             const localizedReq = foundTarget.urlType === 'internal' &&
               req.locale !== foundTarget.targetLocale
@@ -219,10 +218,12 @@ module.exports = {
 
             const parsedCode = parseInt(target.statusCode);
             const status = (parsedCode && !isNaN(parsedCode)) ? parsedCode : 302;
+            const qs = shouldForwardQueryString && queryString ? `?${queryString}` : '';
+
             if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-              return redirect(status, target._newPage[0]._url);
+              return redirect(status, target._newPage[0]._url + qs);
             } else if (target.urlType === 'external' && target.externalUrl.length) {
-              return redirect(status, target.externalUrl);
+              return redirect(status, target.externalUrl + qs);
             }
 
             return await emitAndRedirectOrNext();
@@ -234,8 +235,7 @@ module.exports = {
           async function redirect(status, url, redirectMethod = 'rawRedirect') {
             const result = { status, url };
             await self.emit('beforeRedirect', req, result);
-            const targetUrl = result.url.indexOf('?') > -1 ? result.url : result.url + (shouldForwardQueryString && queryString ? `?${queryString}` : '');
-            return res[redirectMethod](result.status, targetUrl);
+            return res[redirectMethod](result.status, result.url);
           }
 
           async function emitAndRedirectOrNext() {
