@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.4.0 (2024-02-23)
 
 Several fixes and improvements contributed by Stéphane Maccari of Michelin:
 
