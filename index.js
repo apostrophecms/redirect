@@ -17,7 +17,8 @@ module.exports = {
     },
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
     seoFields: false, // Disables @apostrophecms/seo for redirects
-    regExpWhiteList: [ /\/api\/v1\/.*/ ]
+    regExpWhiteList: [ /\/api\/v1\/.*/ ],
+    before: null
   },
   init(self) {
     self.addUnlocalizedMigration();
@@ -161,7 +162,7 @@ module.exports = {
   middleware(self, options) {
     return {
       checkRedirect: {
-        before: '@apostrophecms/global',
+        before: self.options.before,
         async middleware(req, res, next) {
 
           try {

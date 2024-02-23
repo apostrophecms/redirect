@@ -116,6 +116,12 @@ module.exports = {
 };
 ```
 
+### Executing the middleware sooner
+
+By default the middleware of this module that checks for redirect is executed depending on the place of this module in your modules configuration.   
+You can choose to execute it before any other module by setting the `before` option, indicating before which module middleware this one should run (for example `@apostrophecms/global`).   
+Note that by doing this, the above preemption will not work anymore.   
+
 
 ## Redirecting to other locales
 
