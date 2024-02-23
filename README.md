@@ -67,7 +67,8 @@ Also be aware that Apostrophe already creates "soft redirects" every time you ch
 
 ### Providing a fallback handler
 
-If you wish to handle redirects in another way when this module does not find a match, you can do so by listening for the `@apostrophecms/redirect:noMatch` event. This event handler receives `req, result`. To issue a redirect, set `result.redirect` in your event handler. To issue a "raw" redirect to which any sitewide prefix is not appended automatically, set `result.rawRedirect` in your event handler. **Do not** call `req.res.redirect()` yourself in your event handler.
+If you wish to handle redirects in another way when this module does not find a match, you can do so by listening for the `@apostrophecms/redirect:noMatch` event. This event handler receives `req, result`. To issue a redirect, set `result.redirect` in your event handler. To issue a "raw" redirect to which any sitewide prefix is not appended automatically, set `result.rawRedirect` in your event handler. You can also set `result.status` to match your need as the status code of the redirection, default is `302`.   
+If you wish to alter the target url when a redirection is about to come, like for example to change the domain, you can listen to the `@apostrophecms/redirect:beforeRedirect`. This event handler receives `req, result`. `result` will have two properties that you can alter before the redirection: `status` and `url`. **Do not** call `req.res.redirect()` yourself in your event handler in those two cases.
 
 For example:
 
@@ -114,6 +115,12 @@ module.exports = {
   }
 };
 ```
+
+### Executing the middleware sooner
+
+By default the middleware of this module that checks for redirect is executed depending on the place of this module in your modules configuration.   
+You can choose to execute it before any other module by setting the `before` option, indicating before which module middleware this one should run (for example `@apostrophecms/global`).   
+Note that by doing this, the above preemption will not work anymore.   
 
 
 ## Redirecting to other locales

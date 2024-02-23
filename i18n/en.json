@@ -8,6 +8,7 @@
   "urlTypeInternal": "Internal Page",
   "urlTypeExternal": "External URL",
   "ignoreQuery": "Ignore query string when matching.",
+  "forwardQuery": "Forward query string.",
   "newPage": "Page Title",
   "external": "URL",
   "statusCode": "Redirect Type",

@@ -8,6 +8,7 @@
     "urlTypeInternal": "Página Interna",
     "urlTypeExternal": "URL Externo",
     "ignoreQuery": "Ignorar la cadena de consulta al igualar el URL.",
+    "forwardQuery":  "Reenviar la cadena de consulta.",
     "newPage": "Título de la Página",
     "external": "URL",
     "statusCode": "Tipo de Redirección",

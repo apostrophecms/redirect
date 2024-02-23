@@ -8,6 +8,7 @@
     "urlTypeInternal": "Interná URL stránka",
     "urlTypeExternal": "Externá URL stránka",
     "ignoreQuery": "Ignorovať reťazec dotazu pri zhode.",
+    "forwardQuery": "Presmerovať reťazec dotazu.",
     "newPage": "Názov stránky",
     "external": "URL",
     "statusCode": "Typ presmerovania",
