@@ -17,7 +17,7 @@ module.exports = {
     },
     openGraph: false, // Disables @apostrophecms/open-graph for redirects
     seoFields: false, // Disables @apostrophecms/seo for redirects
-    regExpWhiteList: [ /\/api\/v1\/.*/ ],
+    skip: [ /\/api\/v1\/.*/ ],
     before: null
   },
   init(self) {
@@ -166,11 +166,11 @@ module.exports = {
         async middleware(req, res, next) {
 
           try {
-            if (self.options.regExpWhiteList.find((regExp) => regExp.test(req.originalUrl))) {
+            if (self.options.skip.find((regExp) => regExp.test(req.originalUrl))) {
               return next();
             }
           } catch (e) {
-            self.apos.util.error('Error checking redirect white list: ', e);
+            self.apos.util.error('Error checking redirect allow list: ', e);
           }
 
           try {

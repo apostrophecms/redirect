@@ -53,6 +53,22 @@ By passing `withType` to your configuration you can specify the document type yo
 
 **Note:** Apostrophe 2 supported creating relationships to multiple doc types from a single interface. This feature is still being ported to Apostrophe 3, as such redirects can only specify a single doc type to redirect to.
 
+### `skip`
+
+For performance the redirect check can be skipped for URLs matching certain regular expressions.
+The default configuration of the `skip` option is:
+
+```javascript
+// Other modules, then...
+'@apostrophecms/redirect': {
+  options: {
+    skip: [ /\/api\/v1\/.*/ ]
+  }
+}
+```
+
+If you wish to skip other patterns, we recommend keeping the default one as it speeds up API calls.
+
 ## Usage
 
 While logged in as an admin, click the "Redirects" button. A list of redirects appears, initially empty. Add as many redirects as you like. The "from" URL must begin with a `/`. The "to" URL may be anything and need not be on your site. The "description" field is for your own convenience.
