@@ -176,7 +176,7 @@ module.exports = {
           try {
             const slug = req.originalUrl;
             const [ pathOnly, queryString ] = slug.split('?');
-            
+
             const results = await self
               .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
               .currentLocaleTarget(false)
@@ -234,7 +234,10 @@ module.exports = {
           }
 
           async function redirect(status, url, redirectMethod = 'rawRedirect') {
-            const result = { status, url };
+            const result = {
+              status,
+              url
+            };
             await self.emit('beforeRedirect', req, result);
             return res[redirectMethod](result.status, result.url);
           }
