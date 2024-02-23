@@ -8,6 +8,7 @@ Several fixes and improvements contributed by Stéphane Maccari of Michelin:
 * Irrelevant SEO fields are properly removed from redirect pieces
 * The `ignoreQueryString` field is honored properly
 * Redirects to internal pages are saved properly
+* Admins adding redirects may now elect to pass on the query string as part of the redirect
 * `before` option added, giving the option of running the middleware earlier, e.g. before `@apostrophecms/global`
 * Performance enhancement: skip the redirect check for API URLs like `/api/v1/...`. This can be
 overridden using the `skip` option
