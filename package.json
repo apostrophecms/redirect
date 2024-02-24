@@ -1,6 +1,6 @@
 {
   "name": "@apostrophecms/redirect",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Manage redirects for Apostrophe 3",
   "main": "index.js",
   "scripts": {
