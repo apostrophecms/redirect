@@ -197,10 +197,16 @@ module.exports = {
             }
 
             const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
-            results.find(({
-              redirectSlug,
-              ignoreQueryString
-            }) => redirectSlug === pathOnly && ignoreQueryString);
+              results.find(({
+                redirectSlug,
+                ignoreQueryString
+              }) => redirectSlug === pathOnly && ignoreQueryString);
+
+            if (!foundTarget) {
+              // Query will produce a match if the path matches, but we need
+              // to implement ignoreQueryString: false properly
+              return await emitAndRedirectOrNext();
+            }
 
             const shouldForwardQueryString = foundTarget && foundTarget.forwardQueryString;
 
