@@ -36,8 +36,8 @@ module.exports = {
         },
         setCurrentLocale(req, doc) {
           const internalPage = doc._newPage && doc._newPage[0];
-
-          doc.targetLocale = internalPage && doc.urlType === 'internal'
+          // Watch out for unlocalized types and missing documents
+          doc.targetLocale = (doc.urlType === 'internal' && internalPage?.aposLocale)
             ? internalPage.aposLocale.replace(/:.*$/, '')
             : null;
         }
@@ -197,15 +197,24 @@ module.exports = {
             }
 
             const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
-            results.find(({
-              redirectSlug,
-              ignoreQueryString
-            }) => redirectSlug === pathOnly && ignoreQueryString);
+              results.find(({
+                redirectSlug,
+                ignoreQueryString
+              }) => redirectSlug === pathOnly && ignoreQueryString);
+
+            if (!foundTarget) {
+              // Query will produce a match if the path matches, but we need
+              // to implement ignoreQueryString: false properly
+              return await emitAndRedirectOrNext();
+            }
 
             const shouldForwardQueryString = foundTarget && foundTarget.forwardQueryString;
 
-            const localizedReq = foundTarget.urlType === 'internal' &&
-              req.locale !== foundTarget.targetLocale
+            const localizedReq = (
+              (foundTarget.urlType === 'internal') &&
+              Object.keys(self.apos.i18n.locales).includes(foundTarget.targetLocale) &&
+              (req.locale !== foundTarget.targetLocale)
+            )
               ? req.clone({ locale: foundTarget.targetLocale })
               : req;
 
@@ -299,6 +308,30 @@ module.exports = {
           }
         });
       },
+
+      addTargetLocaleMigration() {
+        self.apos.migration.add('@apostrophecms/redirect:addTargetLocale', async () => {
+          await self.apos.migration.eachDoc({
+            type: self.__meta.name,
+            urlType: 'internal',
+            targetLocale: {
+              $exists: 0
+            }
+          }, async redirect => {
+            const target = await self.apos.doc.db.findOne({
+              _id: redirect.newPageIds[0]
+            });
+            await self.apos.doc.db.updateOne({
+              _id: redirect._id
+            }, {
+              $set: {
+                targetLocale: target.aposLocale.replace(/:.*$/, '')
+              }
+            });
+          });
+        });
+      },
+
       createIndexes() {
         self.apos.doc.db.createIndex({ redirectSlug: 1 });
       }
