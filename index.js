@@ -22,6 +22,7 @@ module.exports = {
   },
   init(self) {
     self.addUnlocalizedMigration();
+    self.addTargetLocaleMigration();
     self.createIndexes();
   },
   handlers(self) {
