@@ -319,14 +319,17 @@ module.exports = {
               $exists: 0
             }
           }, async redirect => {
-            const target = await self.apos.doc.db.findOne({
-              _id: redirect.newPageIds[0]
-            });
             await self.apos.doc.db.updateOne({
               _id: redirect._id
             }, {
               $set: {
-                targetLocale: target.aposLocale.replace(/:.*$/, '')
+                // It is in the nature of the original bug that we can't tell exactly
+                // what locale this should have been (relationships use aposDocId which
+                // is cross-locale and we were not saving any information about the
+                // target locale). However the default locale is the most
+                // likely to be useful and prevents a crash, and if it is not useful
+                // the user can just edit or remove the redirect
+                targetLocale: self.apos.i18n.defaultLocale
               }
             });
           });
