@@ -62,17 +62,18 @@ describe('@apostrophecms/redirect', function () {
     const reqFr = apos.task.getReq({ locale: 'fr' });
     const instance = redirectModule.newInstance();
     const pageFr = await apos.page.find(reqFr, { title: 'page fr' }).toObject();
-    await redirectModule.insert(req, {
+    const inserted = await redirectModule.insert(req, {
       ...instance,
       title: 'internal redirect',
       urlType: 'internal',
       redirectSlug: '/page-1',
       _newPage: [ pageFr ]
     });
-
+    assert.strictEqual(inserted.targetLocale, 'fr');
     const redirected = await apos.http.get('http://localhost:3000/page-1');
     assert.equal(redirected, '<title>page fr</title>\n');
   });
+
 });
 
 async function insertPages(apos) {

@@ -22,6 +22,7 @@ module.exports = {
   },
   init(self) {
     self.addUnlocalizedMigration();
+    self.addTargetLocaleMigration();
     self.createIndexes();
   },
   handlers(self) {
@@ -36,8 +37,8 @@ module.exports = {
         },
         setCurrentLocale(req, doc) {
           const internalPage = doc._newPage && doc._newPage[0];
-
-          doc.targetLocale = internalPage && doc.urlType === 'internal'
+          // Watch out for unlocalized types and missing documents
+          doc.targetLocale = (doc.urlType === 'internal' && internalPage?.aposLocale)
             ? internalPage.aposLocale.replace(/:.*$/, '')
             : null;
         }
@@ -210,8 +211,11 @@ module.exports = {
 
             const shouldForwardQueryString = foundTarget && foundTarget.forwardQueryString;
 
-            const localizedReq = foundTarget.urlType === 'internal' &&
-              req.locale !== foundTarget.targetLocale
+            const localizedReq = (
+              (foundTarget.urlType === 'internal') &&
+              Object.keys(self.apos.i18n.locales).includes(foundTarget.targetLocale) &&
+              (req.locale !== foundTarget.targetLocale)
+            )
               ? req.clone({ locale: foundTarget.targetLocale })
               : req;
 
@@ -305,6 +309,33 @@ module.exports = {
           }
         });
       },
+
+      addTargetLocaleMigration() {
+        self.apos.migration.add('@apostrophecms/redirect:addTargetLocale', async () => {
+          await self.apos.migration.eachDoc({
+            type: self.__meta.name,
+            urlType: 'internal',
+            targetLocale: {
+              $exists: 0
+            }
+          }, async redirect => {
+            await self.apos.doc.db.updateOne({
+              _id: redirect._id
+            }, {
+              $set: {
+                // It is in the nature of the original bug that we can't tell exactly
+                // what locale this should have been (relationships use aposDocId which
+                // is cross-locale and we were not saving any information about the
+                // target locale). However the default locale is the most
+                // likely to be useful and prevents a crash, and if it is not useful
+                // the user can just edit or remove the redirect
+                targetLocale: self.apos.i18n.defaultLocale
+              }
+            });
+          });
+        });
+      },
+
       createIndexes() {
         self.apos.doc.db.createIndex({ redirectSlug: 1 });
       }
