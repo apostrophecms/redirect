@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 * Bug fix to properly migrate older redirects missing a `targetLocale` property, and to tolerate situations where this property is irrelevant or makes reference to a locale that no longer exists in the system.
+* Fixes permanent redirects (301) being 302 because `statusCode` of the redirects were never fetched.
 
 ## 1.4.0 (2024-02-23)
 
