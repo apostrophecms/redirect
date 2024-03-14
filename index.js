@@ -189,7 +189,8 @@ module.exports = {
                 externalUrl: 1,
                 urlType: 1,
                 ignoreQueryString: 1,
-                forwardQueryString: 1
+                forwardQueryString: 1,
+                statusCode: 1
               })
               .toArray();
 
