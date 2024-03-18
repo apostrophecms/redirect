@@ -1,7 +1,7 @@
 {
   "name": "@apostrophecms/redirect",
   "version": "1.4.0",
-  "description": "Manage redirects for Apostrophe 3",
+  "description": "Manage redirects for apostropheCMS",
   "main": "index.js",
   "scripts": {
     "lint": "npm run eslint",
