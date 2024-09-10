@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Updates translations strings
+
 ## 1.4.1 (2024-03-20)
 
 * Bug fix to properly migrate older redirects missing a `targetLocale` property, and to tolerate situations where this property is irrelevant or makes reference to a locale that no longer exists in the system.
