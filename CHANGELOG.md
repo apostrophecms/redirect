@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.2 (2024-10-03)
 
 * Updates translations strings
 
