@@ -175,9 +175,14 @@ module.exports = {
           }
 
           try {
-            const slug = req.originalUrl;
-            const [ pathOnly, queryString ] = slug.split('?');
-
+            let slug = req.originalUrl;
+            let [ pathOnly, queryString ] = slug.split('?');
+            pathOnly = pathOnly.split('/').map(decodeURIComponent).join('/');
+            if (queryString !== undefined) {
+              slug = `${pathOnly}?${queryString}`;
+            } else {
+              slug = pathOnly;
+            }
             const results = await self
               .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
               .currentLocaleTarget(false)

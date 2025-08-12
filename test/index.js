@@ -41,6 +41,54 @@ describe('@apostrophecms/redirect', function () {
     assert.equal(redirected, '<title>page 2</title>\n');
   });
 
+  it('should allow to redirect to external URLs when the initial slug is UTF8', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'external redirect',
+      urlType: 'external',
+      redirectSlug: '/page-✅',
+      externalUrl: 'http://localhost:3000/page-2'
+    });
+    const redirected = await apos.http.get('http://localhost:3000/page-✅');
+
+    assert.equal(redirected, '<title>page 2</title>\n');
+  });
+
+  it('query string matters by default', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'external redirect',
+      urlType: 'external',
+      redirectSlug: '/page-✅',
+      externalUrl: 'http://localhost:3000/page-2'
+    });
+    try {
+      await apos.http.get('http://localhost:3000/page-✅?whatever');
+      assert(false);
+    } catch (e) {
+      // good, should 404
+    }
+  });
+
+  it('query string can optionally be ignored', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'external redirect',
+      urlType: 'external',
+      redirectSlug: '/page-✅',
+      externalUrl: 'http://localhost:3000/page-2',
+      ignoreQueryString: true
+    });
+    const redirected = await apos.http.get('http://localhost:3000/page-✅?whatever');
+    assert.equal(redirected, '<title>page 2</title>\n');
+  });
+
   it('should allow to redirect to internal pages', async function() {
     const req = apos.task.getReq();
     const instance = redirectModule.newInstance();
