@@ -178,7 +178,7 @@ module.exports = {
             let slug = req.originalUrl;
             let [ pathOnly, queryString ] = slug.split('?');
             pathOnly = pathOnly.split('/').map(decodeURIComponent).join('/');
-            if (queryString) {
+            if (queryString !== undefined) {
               slug = `${pathOnly}?${queryString}`;
             } else {
               slug = pathOnly;
