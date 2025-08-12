@@ -24,7 +24,6 @@ module.exports = {
     self.addUnlocalizedMigration();
     self.addTargetLocaleMigration();
     self.createIndexes();
-    self.addEncodingMigration();
   },
   handlers(self) {
     return {
@@ -35,8 +34,6 @@ module.exports = {
           if (!doc.title) {
             doc.title = doc.redirectSlug;
           }
-
-          doc.encodedRedirectSlug = self.encodeRedirectSlug(doc.redirectSlug);
         },
         setCurrentLocale(req, doc) {
           const internalPage = doc._newPage && doc._newPage[0];
@@ -181,14 +178,13 @@ module.exports = {
             const slug = req.originalUrl;
             const [ pathOnly, queryString ] = slug.split('?');
 
-            console.log(`the originalUrl is: ${slug}`);
             const results = await self
-              .find(req, { $or: [ { encodedRedirectSlug: slug }, { encodedRedirectSlug: pathOnly } ] })
+              .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
               .currentLocaleTarget(false)
               .relationships(false)
               .project({
                 _id: 1,
-                encodedRedirectSlug: 1,
+                redirectSlug: 1,
                 targetLocale: 1,
                 externalUrl: 1,
                 urlType: 1,
@@ -202,11 +198,11 @@ module.exports = {
               return await emitAndRedirectOrNext();
             }
 
-            const foundTarget = results.find(({ encodedRedirectSlug }) => encodedRedirectSlug === slug) ||
+            const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
               results.find(({
-                encodedRedirectSlug,
+                redirectSlug,
                 ignoreQueryString
-              }) => encodedRedirectSlug === pathOnly && ignoreQueryString);
+              }) => redirectSlug === pathOnly && ignoreQueryString);
 
             if (!foundTarget) {
               // Query will produce a match if the path matches, but we need
@@ -341,41 +337,9 @@ module.exports = {
         });
       },
 
-      addEncodingMigration() {
-        self.apos.migration.add('@apostrophecms/redirect:addEncoding', async () => {
-          self.apos.doc.db.dropIndex({ redirectSlug: 1 });
-          self.apos.doc.db.createIndex({ encodedRedirectSlug: 1 });
-          await self.apos.migration.eachDoc({
-            type: self.__meta.name,
-            encodedRedirectSlug: { $exists: 0 }
-          }, async redirect => {
-            await self.apos.doc.db.updateOne({
-              _id: redirect._id
-            }, {
-              $set: {
-                encodedRedirectSlug: self.encodeRedirectSlug(redirect.redirectSlug)
-              }
-            });
-          });
-        });
-      },
-
       createIndexes() {
-        self.apos.doc.db.createIndex({ encodedRedirectSlug: 1 });
-      },
-
-      encodeRedirectSlug(redirectSlug) {
-        const uri = new URL(`https://apostrophecms.com${redirectSlug}`);
-        const result = uri.pathname;
-        console.log(`encodeRedirectSlug converted ${redirectSlug} to ${result}`);
-        const qat = redirectSlug.indexOf('?');
-        if (qat !== -1) {
-          return result + redirectSlug.substring(qat);
-        } else {
-          return result;
-        }
+        self.apos.doc.db.createIndex({ redirectSlug: 1 });
       }
-
     };
   }
 };
