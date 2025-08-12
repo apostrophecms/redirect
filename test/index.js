@@ -41,6 +41,21 @@ describe('@apostrophecms/redirect', function () {
     assert.equal(redirected, '<title>page 2</title>\n');
   });
 
+  it('should allow to redirect to external URLs when the initial slug is UTF8', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'external redirect',
+      urlType: 'external',
+      redirectSlug: '/page-✅',
+      externalUrl: 'http://localhost:3000/page-2'
+    });
+    const redirected = await apos.http.get('http://localhost:3000/page-1-✅');
+
+    assert.equal(redirected, '<title>page 2</title>\n');
+  });
+
   it('should allow to redirect to internal pages', async function() {
     const req = apos.task.getReq();
     const instance = redirectModule.newInstance();
@@ -86,6 +101,12 @@ async function insertPages(apos) {
     ...pageInstance,
     title: 'page 1',
     slug: '/page-1'
+  });
+  // For utf8 tests
+  await apos.page.insert(req, '_home', 'lastChild', {
+    ...pageInstance,
+    title: 'page ✅',
+    slug: '/page-✅'
   });
   await apos.page.insert(req, '_home', 'lastChild', {
     ...pageInstance,
