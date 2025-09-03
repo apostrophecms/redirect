@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.4.3 (2025-09-03)
 
 * Bug fix: UTF8 URLs now match properly. For instance, redirects containing Thai characters work as expected. Editors can paste them naturally (without hand-escaping them first) and the redirect module will correctly decode the URL received from Express before attempting to match it to a redirect.
 
