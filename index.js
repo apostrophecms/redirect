@@ -263,8 +263,8 @@ module.exports = {
 
               // Wildcard match
               if (redirect.redirectSlugPrefix && pathOnly.startsWith(redirect.redirectSlugPrefix)) {
-                const asteriskIndex = redirect.redirectSlug.indexOf('*');
-                const suffixPattern = redirect.redirectSlug.substring(asteriskIndex + 1);
+                const wildcardIndex = redirect.redirectSlug.indexOf('*');
+                const suffixPattern = redirect.redirectSlug.substring(wildcardIndex + 1);
                 const capturedPart = pathOnly.substring(redirect.redirectSlugPrefix.length);
 
                 // Check if the URL matches the suffix pattern
@@ -327,17 +327,13 @@ module.exports = {
             const qs = shouldForwardQueryString && queryString ? `?${queryString}` : '';
 
             if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
-              let destinationUrl = target._newPage[0]._url;
-              if (isWildcardMatch && destinationUrl.includes('*')) {
-                destinationUrl = destinationUrl.replace('*', foundTarget.wildcardMatch);
-              }
-              return redirect(status, destinationUrl + qs);
+              return redirect(status, target._newPage[0]._url + qs);
             } else if (target.urlType === 'external' && target.externalUrl.length) {
-              let destinationUrl = target.externalUrl;
-              if (isWildcardMatch && destinationUrl.includes('*')) {
-                destinationUrl = destinationUrl.replace('*', foundTarget.wildcardMatch);
-              }
-              return redirect(status, destinationUrl + qs);
+              const externalUrl = isWildcardMatch && target.externalUrl.includes('*')
+                ? target.externalUrl.replace('*', foundTarget.wildcardMatch)
+                : target.externalUrl;
+
+              return redirect(status, externalUrl + qs);
             }
 
             return await emitAndRedirectOrNext();
