@@ -127,8 +127,7 @@ module.exports = {
       externalUrl: {
         label: 'aposRedirect:external',
         type: 'url',
-        pattern: '^[^*]*(\\/\\*)?[^*]*$',
-        patternErrorMessage: 'aposRedirect:externalUrlPatternError',
+        pattern: '^(/[^*/]+)+(/\\*)?(/[^*/]+)*$',
         if: {
           urlType: 'external'
         }
