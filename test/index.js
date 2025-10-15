@@ -122,6 +122,115 @@ describe('@apostrophecms/redirect', function () {
     assert.equal(redirected, '<title>page fr</title>\n');
   });
 
+  it('should not accept /* as redirectSlug', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await assert.rejects(
+      redirectModule.insert(req, {
+        ...instance,
+        title: 'wildcard redirect',
+        urlType: 'external',
+        redirectSlug: '/*',
+        externalUrl: '/page-2'
+      })
+    );
+  });
+
+  it('should not accept /api/v1/* as redirectSlug', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await assert.rejects(
+      redirectModule.insert(req, {
+        ...instance,
+        title: 'wildcard redirect',
+        urlType: 'external',
+        redirectSlug: '/api/v1/*',
+        externalUrl: '/page-2'
+      })
+    );
+  });
+
+  it('should make a simple wildcard redirection', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'wildcard redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/*',
+      externalUrl: '/auto/manufacturers'
+    });
+
+    const redirected = await apos.http.get('http://localhost:3000/manufacturers/bmw/k-1100-lt');
+    assert.equal(redirected, '<title>manufacturers</title>\n');
+  });
+
+  it('should match the wildcard from the external url', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'wildcard redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/mercedes-benz/*',
+      externalUrl: '/auto/manufacturers/mercedes-benz/*'
+    });
+
+    const redirected = await apos.http.get('http://localhost:3000/manufacturers/mercedes-benz/cl600');
+    assert.equal(redirected, '<title>cl600</title>\n');
+  });
+
+  it('should prioritize exact matches over wildcard matches', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'wildcard redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/*',
+      externalUrl: '/auto/manufacturers'
+    });
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'specific redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/mercedes-benz/cl600',
+      externalUrl: '/auto/manufacturers/mercedes-benz/cl600'
+    });
+
+    const redirected = await apos.http.get('http://localhost:3000/manufacturers/mercedes-benz/cl600');
+    assert.equal(redirected, '<title>cl600</title>\n');
+  });
+
+  it('should prioritize specific wildcard redirects over wider ones', async function() {
+    const req = apos.task.getReq();
+    const instance = redirectModule.newInstance();
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'wildcard redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/*',
+      externalUrl: '/auto/manufacturers'
+    });
+
+    await redirectModule.insert(req, {
+      ...instance,
+      title: 'specific redirect',
+      urlType: 'external',
+      redirectSlug: '/manufacturers/mercedes-benz/*',
+      externalUrl: '/auto/manufacturers/mercedes-benz/*'
+    });
+
+    const redirected = await apos.http.get('http://localhost:3000/manufacturers/mercedes-benz/cl600');
+    assert.equal(redirected, '<title>cl600</title>\n');
+  });
 });
 
 async function insertPages(apos) {
@@ -144,6 +253,16 @@ async function insertPages(apos) {
     ...pageInstance,
     title: 'page fr',
     slug: '/page-fr'
+  });
+  await apos.page.insert(req, '_home', 'lastChild', {
+    ...pageInstance,
+    title: 'cl600',
+    slug: '/auto/manufacturers/mercedes-benz/cl600'
+  });
+  await apos.page.insert(req, '_home', 'lastChild', {
+    ...pageInstance,
+    title: 'manufacturers',
+    slug: '/auto/manufacturers'
   });
 }
 
