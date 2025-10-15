@@ -71,7 +71,7 @@ module.exports = {
         type: 'string',
         label: 'aposRedirect:originalSlug',
         help: 'aposRedirect:originalSlugHelp',
-        pattern: '^(\\/[^*]+)+\\/\\*?$',
+        pattern: '^(/[^*/]+)+(/\\*)?(/[^*/]+)*$',
         required: true
       },
       title: {
