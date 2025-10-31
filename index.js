@@ -127,7 +127,6 @@ module.exports = {
       externalUrl: {
         label: 'aposRedirect:external',
         type: 'url',
-        pattern: '^(/[^*/]+)+(/\\*)?(/[^*/]+)*$',
         if: {
           urlType: 'external'
         }
@@ -195,7 +194,14 @@ module.exports = {
           try {
             let slug = req.originalUrl;
             let [ pathOnly, queryString ] = slug.split('?');
-            pathOnly = pathOnly.split('/').map(decodeURIComponent).join('/');
+            const pathOnlyParts = pathOnly.split('/').map(decodeURIComponent);
+            pathOnly = pathOnlyParts.join('/');
+            const prefixes = [];
+            // We are not interested in a wildcard at / because we expressly disallow it,
+            // so checking for it is a needless performance hit
+            for (let i = 2; (i < (pathOnlyParts.length)); i++) {
+              prefixes.push(pathOnlyParts.slice(0, i).join('/') + '/');
+            }
             if (queryString !== undefined) {
               slug = `${pathOnly}?${queryString}`;
             } else {
@@ -204,21 +210,19 @@ module.exports = {
 
             // Build query conditions
             const orConditions = [
-              { redirectSlug: slug },
-              { redirectSlug: pathOnly }
+              { redirectSlug: slug }
             ];
+
+            if (pathOnly !== slug) {
+              orConditions.push({
+                redirectSlug: pathOnly
+              });
+            }
 
             // Add wildcard prefix matching
             orConditions.push({
               redirectSlugPrefix: {
-                $ne: null,
-                $exists: true
-              },
-              $expr: {
-                $eq: [
-                  { $indexOfCP: [ pathOnly, '$redirectSlugPrefix' ] },
-                  0
-                ]
+                $in: prefixes
               }
             });
 
