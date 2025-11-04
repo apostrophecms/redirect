@@ -6,7 +6,7 @@
   "title": "Description",
   "urlType": "Link Type",
   "urlTypeInternal": "Internal Page",
-  "urlTypeExternal": "External URL",
+  "urlTypeExternal": "URL",
   "ignoreQuery": "Ignore query string when matching",
   "forwardQuery": "Forward query string",
   "newPage": "Page Title",

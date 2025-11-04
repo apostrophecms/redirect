@@ -6,7 +6,7 @@
     "title": "Descripción",
     "urlType": "Tipo de Liga o Enlace",
     "urlTypeInternal": "Página Interna",
-    "urlTypeExternal": "URL Externo",
+    "urlTypeExternal": "URL",
     "ignoreQuery": "Ignorar la cadena de consulta al igualar el URL.",
     "forwardQuery":  "Reenviar la cadena de consulta.",
     "newPage": "Título de la Página",

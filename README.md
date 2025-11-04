@@ -87,11 +87,100 @@ If you wish to skip other patterns, we recommend keeping the default one as it s
 
 While logged in as an admin, click the "Redirects" button. A list of redirects appears, initially empty. Add as many redirects as you like. The "from" URL must begin with a `/`. The "to" URL may be anything and need not be on your site. The "description" field is for your own convenience.
 
-By default a redirect includes any query string (the `?` and whatever follows it, up to but not including any `#`) on incoming requests when matching for redirection. You can toggle the "ignore query string when matching" option in a redirect definition to ignore query strings on incoming requests and only match on the base URL path. A redirect that does not use this option will always match first, so you can match various specific query strings and then have a fallback rule for other cases.
+### Matching the query string
 
-Be aware that each redirect is live as soon as you save it and that it is possible to make a mess with redirects. In a pinch, you can remove unwanted redirects via the MongoDB command line client (look for `{ type: "@apostrophecms/redirect" }` in the `aposDocs` collection in MongoDB).
+By default a redirect includes any query string (the `?` and whatever follows it, up to but not including any `#`) on incoming requests when matching for redirection. 
 
-Also be aware that Apostrophe already creates "soft redirects" every time you change the slug of a page, provided the page has been accessed at least once at the old URL. So you shouldn't need manually created "hard redirects" in that situation.
+You can toggle the "ignore query string when matching" option in a redirect definition to ignore query strings on incoming requests and only match on the base URL path. A redirect that does not use this option will always match first, so you can match various specific query strings and then have a fallback rule for other cases.
+
+### Matching wildcards
+
+Normally, aside from the query string, only an exact match is honored. If you wish to redirect an entire subdirectory, you may use a `*` immediately after a `/`, for example:
+
+```
+/auto/*
+```
+
+This will redirect **all** URLs beginning with `/auto/` to your destination, like this:
+
+```
+/auto/hyundai -> /fr/auto
+/auto/hyundai/ioniq-5 -> /fr/auto
+/auto/hyundai/ioniq-5 -> /fr/auto
+```
+
+⚠️ Note that this **discards the rest of the URL**. If this is not what you want, see below for ways to avoid it.
+
+### Exact matches always win
+
+If you have a redirect rule with no `*`, it will always beat a redirect rule with an `*`.
+
+Fro instance, if you have rules like this:
+
+```
+/auto/gm/bolt -> /en/auto/gm/bolt
+/auto/* -> /fr/auto
+```
+
+Then actual redirects will play out like this:
+
+```
+/auto/gm/bolt -> /en/auto/gm/bolt
+/auto/toyota/tercel -> /fr/auto
+```
+
+### Capturing wildcards
+
+If you are creating an "URL" redirect, and not an "Internal Page" one, you may also "capture" and reuse the rest of the URL by including the `*` . This is useful when the rest of the URL is still correct.
+
+For instance, if your "Old URL" is:
+
+```
+/auto/*
+```
+
+And you select "URL" as the redirect type and type the following in the "URL" field:
+
+```
+/fr/auto/*
+```
+
+Then redirects will occur like this:
+
+```
+/auto/hyundai -> /fr/auto/hyundai
+/auto/hyundai/ioniq-5 -> /fr/auto/hyundai/ioniq-5
+/auto/hyundai/ioniq-5 -> /fr/auto/hyundai/ioniq-5
+```
+
+### Creating fallbacks with multiple wildcard rules
+
+Note that if you have two redirect rules involving an `*` and one is longer than the other, **the longer match always wins.*
+
+For example, if your redirects are set up like this:
+
+```
+/auto/hyundai/* -> /en/car/hyundai/*
+/auto/* -> /fr/auto/*
+```
+
+Then redirects will play out like this:
+
+```
+/auto/mercedes -> /fr/auto/mercedes
+/auto/mercedes/w123 -> /fr/auto/mercedes/w123
+/auto/hyundai -> /en/car/hyundai
+/auto/hyundai/ioniq-5 -> /en/car/hyundai/ioniq-5
+/auto/hyundai/ioniq-5 -> /en/car/hyundai/ioniq-5
+```
+
+### Safety concerns
+
+Be aware that each redirect is live as soon as you save it and that it is possible to make a mess with redirects. A few obvious dangers like redirecting `/*` or `/api/v1/*` are locked out, but it is still possible to cause problems depending on your site's structure. In a pinch, you can remove unwanted redirects via the MongoDB command line client (look for `{ type: "@apostrophecms/redirect" }` in the `aposDocs` collection in MongoDB).
+
+### Soft redirects: when you don't need this module at all
+
+For your convenience, ApostropheCMS automatically creates "soft redirects" every time you change the slug of a page or piece, provided the document was accessed at least once at the old URL. So you shouldn't need to manually create a "hard redirect" in that situation.
 
 ## Extending the module
 
