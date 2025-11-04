@@ -122,6 +122,19 @@ describe('@apostrophecms/redirect', function () {
     assert.equal(redirected, '<title>page fr</title>\n');
   });
 
+  it('regex should accept only permissible slugs (some edge cases are handled separately)', function() {
+    const goodSlugs = [ '/auto/*', '/automotive', '/auto/cl600/*' ];
+    const badSlugs = [ '/*', '/*/something/*' ];
+    const pattern = apos.redirect.schema.find(field => field.name === 'redirectSlug').pattern;
+    const regexp = new RegExp(pattern);
+    for (const slug of goodSlugs) {
+      assert(regexp.test(slug));
+    }
+    for (const slug of badSlugs) {
+      assert(!regexp.test(slug));
+    }
+  });
+
   it('should not accept /* as redirectSlug', async function() {
     const req = apos.task.getReq();
     const instance = redirectModule.newInstance();
@@ -286,7 +299,11 @@ function getAppConfig() {
         }
       }
     },
-    '@apostrophecms/redirect': {},
+    '@apostrophecms/redirect': {
+      options: {
+        alias: 'redirect'
+      }
+    },
     'default-page': {},
     article: {
       extend: '@apostrophecms/piece-type',

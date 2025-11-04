@@ -67,7 +67,9 @@ module.exports = {
     const add = {
       redirectSlug: {
         // This is *not* type: 'slug' because we want to let you match any
-        // nonsense the old site had in there, including mixed case.
+        // nonsense the old site had in there, including mixed case, with
+        // one exception: only one * is allowed and it must not be right
+        // after the leading /
         type: 'string',
         label: 'aposRedirect:originalSlug',
         help: 'aposRedirect:originalSlugHelp',
@@ -96,7 +98,6 @@ module.exports = {
       },
       ignoreQueryString: {
         label: 'aposRedirect:ignoreQuery',
-        help: 'aposRedirect:ignoreQueryHelp',
         type: 'boolean',
         def: false
       },
@@ -199,7 +200,7 @@ module.exports = {
             const prefixes = [];
             // We are not interested in a wildcard at / because we expressly disallow it,
             // so checking for it is a needless performance hit
-            for (let i = 2; (i < (pathOnlyParts.length)); i++) {
+            for (let i = 2; (i < pathOnlyParts.length); i++) {
               prefixes.push(pathOnlyParts.slice(0, i).join('/') + '/');
             }
             if (queryString !== undefined) {
@@ -247,14 +248,19 @@ module.exports = {
               return await emitAndRedirectOrNext();
             }
 
-            // Filter and sort matches by priority
-            const validMatches = results.filter(redirect => {
+            // Filter and sort matches by priority. Stop early if we find
+            // exact matches
+            let validMatches = [];
+            for (const redirect of results) {
               // Exact match
               if (redirect.redirectSlug === slug) {
                 redirect.matchType = 'exact';
                 redirect.matchLength = 0;
                 redirect.wildcardMatch = null;
-                return true;
+                // The only one that matters, so we can stop early, discard
+                // any others and skip the sort
+                validMatches = [ redirect ];
+                break;
               }
 
               // Exact match ignoring query string
@@ -262,7 +268,10 @@ module.exports = {
                 redirect.matchType = 'exact';
                 redirect.matchLength = 0;
                 redirect.wildcardMatch = null;
-                return true;
+                // The only one that matters, so we can stop early, discard
+                // any others and skip the sort
+                validMatches = [ redirect ];
+                break;
               }
 
               // Wildcard match
@@ -277,34 +286,36 @@ module.exports = {
                     redirect.matchType = 'wildcard';
                     redirect.matchLength = redirect.redirectSlugPrefix.length;
                     redirect.wildcardMatch = capturedPart.substring(0, capturedPart.length - suffixPattern.length);
-                    return true;
+                    validMatches.push(redirect);
+                    continue;
                   }
                 } else {
                   // No suffix, match everything after prefix
                   redirect.matchType = 'wildcard';
                   redirect.matchLength = redirect.redirectSlugPrefix.length;
                   redirect.wildcardMatch = capturedPart;
-                  return true;
+                  validMatches.push(redirect);
+                  continue;
                 }
               }
-
-              return false;
-            });
+            }
 
             if (!validMatches.length) {
               return await emitAndRedirectOrNext();
             }
 
-            // Sort by priority: exact matches first, then longer matches, then shorter matches
-            validMatches.sort((a, b) => {
-              if (a.matchType === 'exact' && b.matchType !== 'exact') {
-                return -1;
-              }
-              if (a.matchType !== 'exact' && b.matchType === 'exact') {
-                return 1;
-              }
-              return b.matchLength - a.matchLength;
-            });
+            if (validMatches.length > 1) {
+              // Sort by priority: exact matches first, then longer matches, then shorter matches
+              validMatches.sort((a, b) => {
+                if (a.matchType === 'exact' && b.matchType !== 'exact') {
+                  return -1;
+                }
+                if (a.matchType !== 'exact' && b.matchType === 'exact') {
+                  return 1;
+                }
+                return b.matchLength - a.matchLength;
+              });
+            }
 
             const foundTarget = validMatches[0];
             const isWildcardMatch = foundTarget.matchType === 'wildcard';
