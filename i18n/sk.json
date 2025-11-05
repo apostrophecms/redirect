@@ -6,7 +6,7 @@
     "title": "Popis",
     "urlType": "Typ odkazu",
     "urlTypeInternal": "Interná URL stránka",
-    "urlTypeExternal": "Externá URL stránka",
+    "urlTypeExternal": "URL",
     "ignoreQuery": "Ignorovať reťazec dotazu pri zhode.",
     "forwardQuery": "Presmerovať reťazec dotazu.",
     "newPage": "Názov stránky",

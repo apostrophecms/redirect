@@ -8,7 +8,7 @@
   "title": "Description",
   "urlType": "Type de lien",
   "urlTypeInternal": "Page interne",
-  "urlTypeExternal": "URL externe",
+  "urlTypeExternal": "URL",
   "ignoreQuery": "Ignorer la chaîne de requête lors de la correspondance",
   "forwardQuery": "Transférer la chaîne de requête",
   "newPage": "Titre de la page",

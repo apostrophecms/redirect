@@ -8,7 +8,7 @@
   "title": "Descrição",
   "urlType": "Tipo de Link",
   "urlTypeInternal": "Página Interna",
-  "urlTypeExternal": "URL Externa",
+  "urlTypeExternal": "URL",
   "ignoreQuery": "Ignorar string de consulta ao combinar",
   "forwardQuery": "Encaminhar string de consulta",
   "newPage": "Título da Página",

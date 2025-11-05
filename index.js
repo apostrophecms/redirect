@@ -35,6 +35,21 @@ module.exports = {
             doc.title = doc.redirectSlug;
           }
         },
+        setRedirectSlugPrefix(req, doc) {
+          if (doc.redirectSlug === '/*') {
+            throw self.apos.error('invalid', 'The redirect slug "/*" is not allowed.');
+          }
+          if (doc.redirectSlug === '/api/v1/*') {
+            throw self.apos.error('invalid', 'The redirect slug "/api/v1/*" is not allowed.');
+          }
+
+          const wildcardIndex = doc.redirectSlug.indexOf('*');
+
+          // Include the slash before the wildcard
+          doc.redirectSlugPrefix = wildcardIndex === -1
+            ? null
+            : doc.redirectSlug.substring(0, wildcardIndex);
+        },
         setCurrentLocale(req, doc) {
           const internalPage = doc._newPage && doc._newPage[0];
           // Watch out for unlocalized types and missing documents
@@ -52,10 +67,13 @@ module.exports = {
     const add = {
       redirectSlug: {
         // This is *not* type: 'slug' because we want to let you match any
-        // nonsense the old site had in there, including mixed case.
+        // nonsense the old site had in there, including mixed case, with
+        // one exception: only one * is allowed and it must not be right
+        // after the leading /
         type: 'string',
         label: 'aposRedirect:originalSlug',
         help: 'aposRedirect:originalSlugHelp',
+        pattern: '^(/[^*/]+)+(/\\*)?(/[^*/]+)*$',
         required: true
       },
       title: {
@@ -177,19 +195,46 @@ module.exports = {
           try {
             let slug = req.originalUrl;
             let [ pathOnly, queryString ] = slug.split('?');
-            pathOnly = pathOnly.split('/').map(decodeURIComponent).join('/');
+            const pathOnlyParts = pathOnly.split('/').map(decodeURIComponent);
+            pathOnly = pathOnlyParts.join('/');
+            const prefixes = [];
+            // We are not interested in a wildcard at / because we expressly disallow it,
+            // so checking for it is a needless performance hit
+            for (let i = 2; (i < pathOnlyParts.length); i++) {
+              prefixes.push(pathOnlyParts.slice(0, i).join('/') + '/');
+            }
             if (queryString !== undefined) {
               slug = `${pathOnly}?${queryString}`;
             } else {
               slug = pathOnly;
             }
+
+            // Build query conditions
+            const orConditions = [
+              { redirectSlug: slug }
+            ];
+
+            if (pathOnly !== slug) {
+              orConditions.push({
+                redirectSlug: pathOnly
+              });
+            }
+
+            // Add wildcard prefix matching
+            orConditions.push({
+              redirectSlugPrefix: {
+                $in: prefixes
+              }
+            });
+
             const results = await self
-              .find(req, { $or: [ { redirectSlug: slug }, { redirectSlug: pathOnly } ] })
+              .find(req, { $or: orConditions })
               .currentLocaleTarget(false)
               .relationships(false)
               .project({
                 _id: 1,
                 redirectSlug: 1,
+                redirectSlugPrefix: 1,
                 targetLocale: 1,
                 externalUrl: 1,
                 urlType: 1,
@@ -203,19 +248,78 @@ module.exports = {
               return await emitAndRedirectOrNext();
             }
 
-            const foundTarget = results.find(({ redirectSlug }) => redirectSlug === slug) ||
-              results.find(({
-                redirectSlug,
-                ignoreQueryString
-              }) => redirectSlug === pathOnly && ignoreQueryString);
+            // Filter and sort matches by priority. Stop early if we find
+            // exact matches
+            let validMatches = [];
+            for (const redirect of results) {
+              // Exact match
+              if (redirect.redirectSlug === slug) {
+                redirect.matchType = 'exact';
+                redirect.matchLength = 0;
+                redirect.wildcardMatch = null;
+                // The only one that matters, so we can stop early, discard
+                // any others and skip the sort
+                validMatches = [ redirect ];
+                break;
+              }
 
-            if (!foundTarget) {
-              // Query will produce a match if the path matches, but we need
-              // to implement ignoreQueryString: false properly
+              // Exact match ignoring query string
+              if (redirect.redirectSlug === pathOnly && redirect.ignoreQueryString) {
+                redirect.matchType = 'exact';
+                redirect.matchLength = 0;
+                redirect.wildcardMatch = null;
+                // The only one that matters, so we can stop early, discard
+                // any others and skip the sort
+                validMatches = [ redirect ];
+                break;
+              }
+
+              // Wildcard match
+              if (redirect.redirectSlugPrefix && pathOnly.startsWith(redirect.redirectSlugPrefix)) {
+                const wildcardIndex = redirect.redirectSlug.indexOf('*');
+                const suffixPattern = redirect.redirectSlug.substring(wildcardIndex + 1);
+                const capturedPart = pathOnly.substring(redirect.redirectSlugPrefix.length);
+
+                // Check if the URL matches the suffix pattern
+                if (suffixPattern) {
+                  if (capturedPart.endsWith(suffixPattern)) {
+                    redirect.matchType = 'wildcard';
+                    redirect.matchLength = redirect.redirectSlugPrefix.length;
+                    redirect.wildcardMatch = capturedPart.substring(0, capturedPart.length - suffixPattern.length);
+                    validMatches.push(redirect);
+                    continue;
+                  }
+                } else {
+                  // No suffix, match everything after prefix
+                  redirect.matchType = 'wildcard';
+                  redirect.matchLength = redirect.redirectSlugPrefix.length;
+                  redirect.wildcardMatch = capturedPart;
+                  validMatches.push(redirect);
+                  continue;
+                }
+              }
+            }
+
+            if (!validMatches.length) {
               return await emitAndRedirectOrNext();
             }
 
-            const shouldForwardQueryString = foundTarget && foundTarget.forwardQueryString;
+            if (validMatches.length > 1) {
+              // Sort by priority: exact matches first, then longer matches, then shorter matches
+              validMatches.sort((a, b) => {
+                if (a.matchType === 'exact' && b.matchType !== 'exact') {
+                  return -1;
+                }
+                if (a.matchType !== 'exact' && b.matchType === 'exact') {
+                  return 1;
+                }
+                return b.matchLength - a.matchLength;
+              });
+            }
+
+            const foundTarget = validMatches[0];
+            const isWildcardMatch = foundTarget.matchType === 'wildcard';
+            const shouldForwardQueryString = foundTarget.forwardQueryString && !isWildcardMatch;
 
             const localizedReq = (
               (foundTarget.urlType === 'internal') &&
@@ -240,7 +344,11 @@ module.exports = {
             if (target.urlType === 'internal' && target._newPage && target._newPage[0]) {
               return redirect(status, target._newPage[0]._url + qs);
             } else if (target.urlType === 'external' && target.externalUrl.length) {
-              return redirect(status, target.externalUrl + qs);
+              const externalUrl = isWildcardMatch && target.externalUrl.includes('*')
+                ? target.externalUrl.replace('*', foundTarget.wildcardMatch)
+                : target.externalUrl;
+
+              return redirect(status, externalUrl + qs);
             }
 
             return await emitAndRedirectOrNext();
@@ -344,6 +452,7 @@ module.exports = {
 
       createIndexes() {
         self.apos.doc.db.createIndex({ redirectSlug: 1 });
+        self.apos.doc.db.createIndex({ redirectSlugPrefix: 1 });
       }
     };
   }
