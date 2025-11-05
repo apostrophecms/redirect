@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 (2025-11-05)
+
+* Wildcard support. Redirects may now contain one and only one `*` wildcard, which must appear immediately after a `/`. If the `*` is the last character, the wildcard will match anything from that point to the end. Exact redirect matches always win, and if multiple wildcards match, the longest match wins. The part of the URL that matched the `*` may be "captured" and reused by including a single `*` in the redirect URL as well. See the README for details.
+
 ## 1.4.3 (2025-09-03)
 
 * Bug fix: UTF8 URLs now match properly. For instance, redirects containing Thai characters work as expected. Editors can paste them naturally (without hand-escaping them first) and the redirect module will correctly decode the URL received from Express before attempting to match it to a redirect.
