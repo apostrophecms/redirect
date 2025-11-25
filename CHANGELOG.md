@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.5.0 (2025-11-25)
 
 * Support for wildcards. See the README for more information.
 
